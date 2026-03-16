@@ -531,8 +531,9 @@ footer a:hover{color:var(--accent)}
         </a>
       </div>
     </div>
-    <form action="https://formspree.io/f/YOUR_FORM_ID" method="POST" class="cf reveal d1">
+    <form id="contact-form" action="https://formspree.io/f/xpqyybap" method="POST" class="cf reveal d1">
       <input type="hidden" name="_subject" value="Portfolio Contact — Prahlad">
+      <div id="form-msg" aria-live="polite" style="display:none;margin-bottom:1rem;font-size:.95rem"></div>
       <div class="fg"><label class="fl">Name</label><input type="text" name="name" required class="fi" placeholder="Your name"></div>
       <div class="fg"><label class="fl">Email</label><input type="email" name="email" required class="fi" placeholder="your@email.com"></div>
       <div class="fg"><label class="fl">Message</label><textarea name="message" rows="5" required class="fta" placeholder="Tell me about the opportunity..."></textarea></div>
@@ -585,6 +586,44 @@ function fp(cat,btn){
     const cats=card.dataset.cat||'';
     if(cat==='all'||cats.includes(cat)){card.style.display='flex';setTimeout(()=>card.style.opacity='1',10);}
     else{card.style.opacity='0';setTimeout(()=>card.style.display='none',300);}
+  });
+}
+
+// Contact form submit handler (Formspree)
+const contactForm = document.getElementById('contact-form');
+const formMsg = document.getElementById('form-msg');
+if(contactForm){
+  contactForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if(!formMsg) return;
+    const submitBtn = contactForm.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    formMsg.style.display = 'block';
+    formMsg.style.color = 'var(--muted)';
+    formMsg.textContent = 'Sending…';
+    try{
+      const data = new FormData(contactForm);
+      const res = await fetch(contactForm.action, {
+        method: contactForm.method || 'POST',
+        body: data,
+        headers: { 'Accept': 'application/json' }
+      });
+      if(res.ok){
+        formMsg.style.color = 'var(--accent)';
+        formMsg.textContent = 'Message sent — thank you! I will reply soon.';
+        contactForm.reset();
+      } else {
+        const body = await res.json().catch(()=>({}));
+        formMsg.style.color = '#fb923c';
+        formMsg.textContent = body.error || 'Submission failed — please try again or email me directly.';
+      }
+    }catch(err){
+      formMsg.style.color = '#fb923c';
+      formMsg.textContent = 'Network error — please try again or email me directly.';
+    }finally{
+      if(submitBtn) submitBtn.disabled = false;
+      setTimeout(()=>{ if(formMsg) formMsg.style.display = formMsg.textContent ? 'block' : 'none'; }, 3000);
+    }
   });
 }
 

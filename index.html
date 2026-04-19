@@ -390,6 +390,7 @@ footer a:hover{color:var(--accent)}
     </div>
     <div class="filter-row">
       <button class="fb active" onclick="fp('all',this)">All</button>
+      <button class="fb" onclick="fp('ai',this)">AI</button>
       <button class="fb" onclick="fp('data',this)">Data</button>
       <button class="fb" onclick="fp('software',this)">Software</button>
       <button class="fb" onclick="fp('iot',this)">IoT</button>
@@ -397,6 +398,27 @@ footer a:hover{color:var(--accent)}
   </div>
 
   <div class="proj-grid" id="pg">
+
+    <!-- APEX Trading Agent FEATURED -->
+    <div class="pc featured reveal" data-cat="ai software data">
+      <div>
+        <span class="feat-badge">AI · Autonomous · Live Markets</span>
+        <div class="pt">AI Agent · Full-Stack · Spring 2026</div>
+      </div>
+      <div class="ptitle">APEX Trading Agent — Autonomous Crypto AI</div>
+      <div class="pdesc">
+        Autonomous crypto trading agent powered by Claude AI that analyzes live Hyperliquid perpetuals market data and makes real-time BUY/SELL decisions with full rationale.<br><br>
+        <strong style="color:var(--text)">How it works:</strong> Fetches live prices, 24h volume, funding rates, and open interest for 12 assets every 15 seconds from Hyperliquid's API. Claude AI analyzes the data, identifies the best trade opportunity, and outputs a structured decision including asset, action, position size, confidence score, stop loss, take profit, and market regime classification.<br><br>
+        <strong style="color:var(--accent2)">Key features:</strong> Automated 3-cycle daily schedule optimized for US market hours, persistent trade history via Supabase, server-side Claude API proxy for security, real-time price charts, and a funding rate arbitrage monitor. Built with Next.js 16, TypeScript, and Tailwind CSS.
+      </div>
+      <div class="pfoot">
+        <div class="pstack">
+          <span class="stag">Next.js</span><span class="stag">TypeScript</span><span class="stag">Claude AI</span>
+          <span class="stag">Supabase</span><span class="stag">Hyperliquid API</span><span class="stag">Tailwind</span>
+        </div>
+        <a href="https://github.com/prah-lad/apex-trading-agent" target="_blank" class="plink">GitHub →</a>
+      </div>
+    </div>
 
     <!-- LotOwl FEATURED -->
     <div class="pc lotowl featured reveal" data-cat="iot software">

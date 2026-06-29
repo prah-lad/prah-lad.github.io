@@ -413,6 +413,18 @@
 <!-- Controls hint -->
 <div id="chint">WASD / Arrow Keys — steer &nbsp;·&nbsp; approach islands to explore &nbsp;·&nbsp; click nav to teleport</div>
 
+<!-- Safety: always clear loading screen even if Three.js CDN is slow -->
+<script>
+window._dismissLoading = function() {
+  var ld = document.getElementById('loading');
+  if (!ld || ld.style.display === 'none') return;
+  ld.classList.add('fade');
+  setTimeout(function(){ ld.style.display='none'; }, 900);
+};
+// Hard fallback at 8s in case CDN takes very long
+setTimeout(window._dismissLoading, 8000);
+</script>
+
 <!-- Three.js via CDN -->
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js"}}
@@ -680,9 +692,7 @@ function updateLabels() {
 
 // ─── Boot dismiss ─────────────────────────────
 setTimeout(() => {
-  const ld = document.getElementById('loading');
-  ld.classList.add('fade');
-  setTimeout(() => ld.style.display='none', 900);
+  window._dismissLoading();
   setTimeout(() => openPanel('home'), 650);
 }, 3500);
 

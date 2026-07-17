@@ -425,8 +425,8 @@ window._dismissLoading = function() {
 setTimeout(window._dismissLoading, 8000);
 </script>
 
-<!-- Three.js UMD (no importmap needed — works everywhere) -->
-<script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"
+<!-- Three.js UMD vendored locally — no CDN dependency -->
+<script src="./vendor/three.min.js"
         onerror="document.getElementById('chint').textContent='WebGL unavailable — try a modern browser'"></script>
 
 <script>
@@ -531,7 +531,9 @@ function mkIsland(hex, sz=6) {
   const pl  = new THREE.PointLight(c, 3.5, 28);
   pl.position.y = 4;
   g.add(pl);
-  g.add(Object.assign(new THREE.PointLight(c, .65, 52), { position: new THREE.Vector3(0,2,0) }));
+  const pl2 = new THREE.PointLight(c, .65, 52);
+  pl2.position.set(0, 2, 0);
+  g.add(pl2);
 
   return { group: g, light: pl };
 }
@@ -610,6 +612,7 @@ let   fly  = null;
 // PANEL LOGIC
 // ═══════════════════════════════════════════════
 let active = null;
+let dismissed = null; // island whose panel the user closed while parked next to it
 
 function openPanel(id) {
   if (active===id) return;
@@ -623,7 +626,7 @@ function openPanel(id) {
 window.closePanel = id => {
   const el = document.getElementById(id==='home'?'ph':'panel-'+id);
   if (el) el.classList.remove('open');
-  if (active===id) active=null;
+  if (active===id) { active=null; dismissed=id; }
 };
 
 window.flyTo = id => {
@@ -741,13 +744,14 @@ const clock = new THREE.Clock();
     camP.lerp(ship.position.clone().add(behind).add(new THREE.Vector3(0,7,0)), .055);
     camL.lerp(ship.position, .1);
 
-    // Proximity
+    // Proximity — don't reopen a panel the user closed until they leave and come back
     let nd=Infinity, ni=null;
     DEFS.forEach(d => {
       const dd = ship.position.distanceTo(ISL[d.id].pos);
       if (dd<nd) { nd=dd; ni=d.id; }
     });
-    if (nd<15 && active!==ni) openPanel(ni);
+    if (dismissed && (dismissed!==ni || nd>18)) dismissed=null;
+    if (nd<15 && active!==ni && dismissed!==ni) openPanel(ni);
 
   } else {
     // Fly-to animation

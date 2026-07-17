@@ -174,6 +174,24 @@
       border-radius:20px;padding:7px 18px;border:1px solid rgba(255,255,255,.05);
       pointer-events:none;z-index:10;white-space:nowrap;
     }
+    /* ─── Mobile D-pad ─── */
+    #dpad{
+      position:fixed;bottom:22px;left:22px;z-index:150;
+      display:grid;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(2,56px);
+      gap:7px;user-select:none;-webkit-user-select:none;
+    }
+    .dbtn{
+      width:56px;height:56px;border-radius:15px;
+      background:rgba(0,255,136,.07);border:1px solid rgba(0,255,136,.28);
+      color:rgba(0,255,136,.85);font-size:21px;
+      display:flex;align-items:center;justify-content:center;
+      cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent;
+    }
+    .dbtn:active,.dbtn.held{background:rgba(0,255,136,.28);border-color:rgba(0,255,136,.6)}
+    .dspace{pointer-events:none}
+    /* hide the D-pad on mouse-and-keyboard machines */
+    @media(hover:hover) and (pointer:fine){#dpad{display:none}}
+
     @media(max-width:640px){
       #ph{width:94vw}
       .pgrid{grid-template-columns:1fr}
@@ -413,6 +431,16 @@
 <!-- Controls hint -->
 <div id="chint">WASD / Arrow Keys — steer &nbsp;·&nbsp; approach islands to explore &nbsp;·&nbsp; click nav to teleport</div>
 
+<!-- Mobile flight controls -->
+<div id="dpad">
+  <div class="dspace"></div>
+  <button class="dbtn" data-k="KeyW" aria-label="Forward">▲</button>
+  <div class="dspace"></div>
+  <button class="dbtn" data-k="KeyA" aria-label="Turn left">◀</button>
+  <button class="dbtn" data-k="KeyS" aria-label="Reverse">▼</button>
+  <button class="dbtn" data-k="KeyD" aria-label="Turn right">▶</button>
+</div>
+
 <!-- Safety: always clear loading screen even if Three.js CDN is slow -->
 <script>
 window._dismissLoading = function() {
@@ -473,6 +501,51 @@ sGeo.setAttribute('position', new THREE.BufferAttribute(sp, 3));
 const stars = new THREE.Points(sGeo, new THREE.PointsMaterial({ color:0xffffff, size:.55, sizeAttenuation:true, transparent:true, opacity:.9 }));
 scene.add(stars);
 
+// ─── Matrix computer-city ground ──────────────
+// Canvas texture: binary streets, circuit grid, glowing city lights
+const gCan = document.createElement('canvas');
+gCan.width = gCan.height = 1024;
+const g2 = gCan.getContext('2d');
+g2.fillStyle = '#010c06';
+g2.fillRect(0, 0, 1024, 1024);
+// city blocks — faint grid
+g2.strokeStyle = 'rgba(0,255,136,.13)';
+g2.lineWidth = 1;
+for (let i = 0; i <= 16; i++) {
+  g2.beginPath(); g2.moveTo(i*64, 0); g2.lineTo(i*64, 1024); g2.stroke();
+  g2.beginPath(); g2.moveTo(0, i*64); g2.lineTo(1024, i*64); g2.stroke();
+}
+// major avenues — brighter
+g2.strokeStyle = 'rgba(0,255,136,.4)';
+g2.lineWidth = 2.5;
+for (let i = 0; i <= 4; i++) {
+  g2.beginPath(); g2.moveTo(i*256, 0); g2.lineTo(i*256, 1024); g2.stroke();
+  g2.beginPath(); g2.moveTo(0, i*256); g2.lineTo(1024, i*256); g2.stroke();
+}
+// binary digits scattered like building lights
+g2.font = '15px monospace';
+for (let i = 0; i < 1400; i++) {
+  g2.fillStyle = `rgba(0,255,136,${.08 + Math.random()*.55})`;
+  g2.fillText(Math.random() < .5 ? '0' : '1', Math.random()*1024, Math.random()*1024);
+}
+// bright junction lights — mostly green, some warm sodium
+for (let i = 0; i < 170; i++) {
+  const warm = Math.random() > .78;
+  g2.fillStyle = warm ? 'rgba(255,215,120,.95)' : 'rgba(140,255,190,.9)';
+  const s = 1.5 + Math.random()*3.5;
+  g2.fillRect(Math.random()*1024, Math.random()*1024, s, s);
+}
+const gTex = new THREE.CanvasTexture(gCan);
+gTex.wrapS = gTex.wrapT = THREE.RepeatWrapping;
+gTex.repeat.set(7, 7);
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(1100, 1100),
+  new THREE.MeshBasicMaterial({ map: gTex, transparent: true, opacity: .9 })
+);
+ground.rotation.x = -Math.PI/2;
+ground.position.y = -44;
+scene.add(ground);
+
 // ═══════════════════════════════════════════════
 // ISLAND FACTORY
 // ═══════════════════════════════════════════════
@@ -519,18 +592,85 @@ function mkIsland(hex, sz=6) {
   st.position.y = -2.5;
   g.add(st);
 
-  // Crystal spires
-  const nS = 3 + Math.floor(Math.random()*2);
-  for (let i = 0; i < nS; i++) {
-    const ang = (i/nS)*Math.PI*2 + Math.random()*.4;
-    const rad = sz*.3 + Math.random()*sz*.28;
-    const h   = 1.2 + Math.random()*2.2;
+  // Mini city — clustered towers with lit windows
+  const darkBld = new THREE.MeshStandardMaterial({ color:0x16324e, roughness:.45, metalness:.35 });
+  const nB = 7 + Math.floor(Math.random()*4);
+  let tallest = 0, tallestPos = null;
+  for (let i = 0; i < nB; i++) {
+    const ang = (i/nB)*Math.PI*2 + Math.random()*.6;
+    const rad = sz*.15 + Math.random()*sz*.58;
+    const w = .4 + Math.random()*.55, d = .4 + Math.random()*.55;
+    const h = .6 + Math.random()*2.4;
+    const lit = Math.random() < .45;
+    const bld = new THREE.Mesh(
+      new THREE.BoxGeometry(w, h, d),
+      lit
+        ? new THREE.MeshStandardMaterial({ color:0x1c3a58, roughness:.4, metalness:.3, emissive:c, emissiveIntensity:.28 })
+        : darkBld
+    );
+    bld.position.set(Math.cos(ang)*rad, .73 + h/2, Math.sin(ang)*rad);
+    bld.rotation.y = Math.random()*Math.PI;
+    g.add(bld);
+    if (h > tallest) { tallest = h; tallestPos = bld.position.clone(); }
+    // window strips — thin glowing slabs on the taller towers
+    if (h > 1.4) {
+      const strip = new THREE.Mesh(
+        new THREE.BoxGeometry(w*1.02, .08, d*1.02),
+        new THREE.MeshBasicMaterial({ color:c, transparent:true, opacity:.8 })
+      );
+      strip.position.copy(bld.position).setY(.73 + h*.72);
+      strip.rotation.y = bld.rotation.y;
+      g.add(strip);
+    }
+  }
+
+  // Antenna with beacon on the tallest tower
+  if (tallestPos) {
+    const mast = new THREE.Mesh(
+      new THREE.CylinderGeometry(.025, .04, 1.1, 5),
+      new THREE.MeshStandardMaterial({ color:0x2a4a66, roughness:.5, metalness:.6 })
+    );
+    mast.position.copy(tallestPos).setY(.73 + tallest + .55);
+    g.add(mast);
+    const beacon = new THREE.Mesh(
+      new THREE.SphereGeometry(.09, 8, 6),
+      new THREE.MeshBasicMaterial({ color:0xff5555 })
+    );
+    beacon.position.copy(tallestPos).setY(.73 + tallest + 1.12);
+    g.add(beacon);
+  }
+
+  // A couple of crystal spires kept as landmarks
+  for (let i = 0; i < 2; i++) {
+    const ang = Math.random()*Math.PI*2;
+    const rad = sz*.55 + Math.random()*sz*.25;
+    const h   = 1.4 + Math.random()*1.6;
     const sp_ = new THREE.Mesh(
-      new THREE.CylinderGeometry(0, .35, h, 4),
+      new THREE.CylinderGeometry(0, .3, h, 4),
       new THREE.MeshStandardMaterial({ color:c, emissive:c, emissiveIntensity:.9, roughness:.22, metalness:.5 })
     );
     sp_.position.set(Math.cos(ang)*rad, .68+h/2, Math.sin(ang)*rad);
     g.add(sp_);
+  }
+
+  // Rotating holo-ring above the city (partial arc so the spin reads)
+  const holo = new THREE.Mesh(
+    new THREE.TorusGeometry(sz*.6, .045, 6, 40, Math.PI*1.55),
+    new THREE.MeshBasicMaterial({ color:c, transparent:true, opacity:.4 })
+  );
+  holo.rotation.x = Math.PI/2;
+  holo.position.y = 4.1;
+  g.add(holo);
+
+  // Floating debris rocks beneath the island
+  for (let i = 0; i < 4; i++) {
+    const rk = new THREE.Mesh(
+      new THREE.DodecahedronGeometry(.22 + Math.random()*.4),
+      new THREE.MeshStandardMaterial({ color:0x1a3450, roughness:.75 })
+    );
+    rk.position.set((Math.random()-.5)*sz*1.3, -4 - Math.random()*2.5, (Math.random()-.5)*sz*1.3);
+    rk.rotation.set(Math.random()*3, Math.random()*3, Math.random()*3);
+    g.add(rk);
   }
 
   // Lights
@@ -541,7 +681,7 @@ function mkIsland(hex, sz=6) {
   pl2.position.set(0, 2, 0);
   g.add(pl2);
 
-  return { group: g, light: pl };
+  return { group: g, light: pl, holo };
 }
 
 // ═══════════════════════════════════════════════
@@ -556,10 +696,10 @@ const DEFS = [
 ];
 const ISL = {};
 DEFS.forEach(d => {
-  const { group, light } = mkIsland(d.color, d.sz);
+  const { group, light, holo } = mkIsland(d.color, d.sz);
   group.position.set(...d.p);
   scene.add(group);
-  ISL[d.id] = { group, light, pos: new THREE.Vector3(...d.p), color: d.color };
+  ISL[d.id] = { group, light, holo, pos: new THREE.Vector3(...d.p), color: d.color };
 });
 
 // ═══════════════════════════════════════════════
@@ -601,6 +741,17 @@ ship.add(engL);
 const K = {};
 window.addEventListener('keydown', e => { K[e.code]=true;  if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault(); });
 window.addEventListener('keyup',   e => { K[e.code]=false; });
+
+// Mobile D-pad → same key map as the keyboard
+document.querySelectorAll('.dbtn').forEach(b => {
+  const k  = b.dataset.k;
+  const on  = e => { e.preventDefault(); K[k]=true;  b.classList.add('held'); };
+  const off = e => { e.preventDefault(); K[k]=false; b.classList.remove('held'); };
+  b.addEventListener('pointerdown',   on);
+  b.addEventListener('pointerup',     off);
+  b.addEventListener('pointerleave',  off);
+  b.addEventListener('pointercancel', off);
+});
 
 let yaw      = Math.PI;
 const vel    = new THREE.Vector3();
@@ -711,13 +862,19 @@ const clock = new THREE.Clock();
 
 (function loop() {
   requestAnimationFrame(loop);
-  const t = clock.getElapsedTime();
+  const dt = Math.min(clock.getDelta(), .05);
+  const t  = clock.elapsedTime;
+  const f  = dt*60; // physics tuned at 60fps — scale for any refresh rate
 
-  // Float islands + pulse lights
+  // Float islands + pulse lights + spin holo-rings
   DEFS.forEach((d, i) => {
     ISL[d.id].group.position.y = d.p[1] + Math.sin(t*.37+i*1.1)*.44;
     ISL[d.id].light.intensity  = 3 + Math.sin(t*1.3+i)*.6;
+    ISL[d.id].holo.rotation.z  = t*.5 + i;
   });
+
+  // Data flowing across the city grid below
+  gTex.offset.y = t*.0035;
 
   // Slow-rotate stars
   stars.rotation.y = t*.004;
@@ -725,21 +882,21 @@ const clock = new THREE.Clock();
 
   if (!fly) {
     // Ship controls
-    if (K['KeyA']||K['ArrowLeft'])  yaw += TURN;
-    if (K['KeyD']||K['ArrowRight']) yaw -= TURN;
+    if (K['KeyA']||K['ArrowLeft'])  yaw += TURN*f;
+    if (K['KeyD']||K['ArrowRight']) yaw -= TURN*f;
     ship.rotation.y = yaw;
 
     const fwd = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
     const boost = K['Space'] ? 1.75 : 1;
-    if (K['KeyW']||K['ArrowUp'])   vel.addScaledVector(fwd,  ACC*boost);
-    if (K['KeyS']||K['ArrowDown']) vel.addScaledVector(fwd, -ACC*.44);
+    if (K['KeyW']||K['ArrowUp'])   vel.addScaledVector(fwd,  ACC*boost*f);
+    if (K['KeyS']||K['ArrowDown']) vel.addScaledVector(fwd, -ACC*.44*f);
     if (vel.length()>MXSP*boost) vel.normalize().multiplyScalar(MXSP*boost);
-    vel.multiplyScalar(DAMP);
-    ship.position.addScaledVector(vel, 1);
+    vel.multiplyScalar(Math.pow(DAMP, f));
+    ship.position.addScaledVector(vel, f);
     ship.position.y = 2.8 + Math.sin(t*.54)*.22;
 
     const tr = (K['KeyA']||K['ArrowLeft'])?1:(K['KeyD']||K['ArrowRight'])?-1:0;
-    tilt += (tr*.2 - tilt)*.1;
+    tilt += (tr*.2 - tilt)*(1 - Math.pow(.9, f));
     ship.rotation.z = tilt;
 
     const thrust = K['KeyW']||K['ArrowUp'];
@@ -747,22 +904,30 @@ const clock = new THREE.Clock();
 
     // Camera follow
     const behind = new THREE.Vector3(Math.sin(yaw),0,Math.cos(yaw)).multiplyScalar(15);
-    camP.lerp(ship.position.clone().add(behind).add(new THREE.Vector3(0,7,0)), .055);
-    camL.lerp(ship.position, .1);
+    camP.lerp(ship.position.clone().add(behind).add(new THREE.Vector3(0,7,0)), 1 - Math.pow(.945, f));
+    camL.lerp(ship.position, 1 - Math.pow(.9, f));
 
-    // Proximity — don't reopen a panel the user closed until they leave and come back
+    // Flying with a panel open? Close it so the view stays clear.
+    const steering = K['KeyW']||K['ArrowUp']||K['KeyS']||K['ArrowDown']||K['KeyA']||K['ArrowLeft']||K['KeyD']||K['ArrowRight'];
+    if (steering && active) {
+      closePanel(active);
+      dismissed = null; // auto-closed, not user-dismissed — reopen freely when they stop
+    }
+
+    // Proximity — open only when the ship has actually stopped at an island,
+    // and never reopen a panel the user closed until they leave and come back
     let nd=Infinity, ni=null;
     DEFS.forEach(d => {
       const dd = ship.position.distanceTo(ISL[d.id].pos);
       if (dd<nd) { nd=dd; ni=d.id; }
     });
     if (dismissed && (dismissed!==ni || nd>18)) dismissed=null;
-    if (nd<15 && active!==ni && dismissed!==ni) openPanel(ni);
+    if (nd<15 && active!==ni && dismissed!==ni && !steering && vel.length()<.06) openPanel(ni);
 
   } else {
     // Fly-to animation
-    camP.lerp(fly.pos, .045);
-    camL.lerp(fly.look, .045);
+    camP.lerp(fly.pos, 1 - Math.pow(.955, f));
+    camL.lerp(fly.look, 1 - Math.pow(.955, f));
     if (camP.distanceTo(fly.pos)<.55) fly=null;
   }
 

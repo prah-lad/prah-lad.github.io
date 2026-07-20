@@ -174,23 +174,70 @@
       border-radius:20px;padding:7px 18px;border:1px solid rgba(255,255,255,.05);
       pointer-events:none;z-index:10;white-space:nowrap;
     }
-    /* ─── Mobile D-pad ─── */
-    #dpad{
-      position:fixed;bottom:22px;left:22px;z-index:150;
-      display:grid;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(2,56px);
-      gap:7px;user-select:none;-webkit-user-select:none;
+    /* ─── HUD: score + sound ─── */
+    #hud{
+      position:fixed;top:18px;right:18px;z-index:150;
+      display:flex;flex-direction:column;gap:6px;align-items:flex-end;
+      font-family:'JetBrains Mono',monospace;
     }
-    .dbtn{
-      width:56px;height:56px;border-radius:15px;
-      background:rgba(0,255,136,.07);border:1px solid rgba(0,255,136,.28);
-      color:rgba(0,255,136,.85);font-size:21px;
+    #score{
+      background:rgba(2,12,20,.82);border:1px solid rgba(0,255,136,.25);
+      border-radius:20px;padding:7px 16px;font-size:11px;color:rgba(0,255,136,.9);
+      letter-spacing:1px;
+    }
+    #score span{font-weight:700}
+    #sndbtn{
+      background:rgba(2,12,20,.82);border:1px solid rgba(255,255,255,.14);
+      border-radius:20px;padding:6px 14px;font-size:9px;color:rgba(255,255,255,.45);
+      cursor:pointer;font-family:'JetBrains Mono',monospace;letter-spacing:1px;
+      transition:all .2s;
+    }
+    #sndbtn:hover{border-color:rgba(255,255,255,.3);color:rgba(255,255,255,.75)}
+    #sndbtn.on{border-color:rgba(0,255,136,.4);color:#00FF88}
+    @media(max-width:640px){#hud{top:70px}}
+
+    /* ─── Mobile controller: joystick + right column ─── */
+    #joy{
+      position:fixed;bottom:26px;left:26px;z-index:150;
+      width:132px;height:132px;border-radius:50%;
+      background:rgba(0,255,136,.05);border:2px solid rgba(0,255,136,.3);
+      touch-action:none;user-select:none;-webkit-user-select:none;
+      -webkit-tap-highlight-color:transparent;
+    }
+    #joyKnob{
+      position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+      width:56px;height:56px;border-radius:50%;
+      background:rgba(0,255,136,.22);border:2px solid rgba(0,255,136,.65);
+      pointer-events:none;box-shadow:0 0 14px rgba(0,255,136,.3);
+    }
+    #joyLbl{
+      position:absolute;top:-24px;left:50%;transform:translateX(-50%);
+      font-family:'JetBrains Mono',monospace;font-size:9px;
+      color:rgba(0,255,136,.5);letter-spacing:1px;white-space:nowrap;
+    }
+    #rcol{
+      position:fixed;bottom:26px;right:22px;z-index:150;
+      display:flex;flex-direction:column;gap:10px;align-items:center;
+    }
+    .rbtn{
+      width:62px;height:62px;border-radius:50%;
+      background:rgba(0,200,255,.08);border:2px solid rgba(0,200,255,.35);
+      color:rgba(0,200,255,.9);font-size:22px;
       display:flex;align-items:center;justify-content:center;
       cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent;
+      font-family:'JetBrains Mono',monospace;
     }
-    .dbtn:active,.dbtn.held{background:rgba(0,255,136,.28);border-color:rgba(0,255,136,.6)}
-    .dspace{pointer-events:none}
-    /* hide the D-pad on mouse-and-keyboard machines */
-    @media(hover:hover) and (pointer:fine){#dpad{display:none}}
+    .rbtn:active,.rbtn.held{background:rgba(0,200,255,.3);border-color:rgba(0,200,255,.7)}
+    #bbtn{
+      width:62px;height:62px;border-radius:50%;
+      background:rgba(255,80,80,.1);border:2px solid rgba(255,80,80,.45);
+      color:rgba(255,110,110,.9);font-size:20px;font-weight:700;
+      font-family:'JetBrains Mono',monospace;cursor:pointer;
+      touch-action:none;-webkit-tap-highlight-color:transparent;
+    }
+    #bbtn:active{background:rgba(255,80,80,.35)}
+    /* hide touch controls on mouse-and-keyboard machines */
+    @media(hover:hover) and (pointer:fine){#joy,#rcol{display:none}}
 
     @media(max-width:640px){
       #ph{width:94vw}
@@ -429,16 +476,23 @@
 </div>
 
 <!-- Controls hint -->
-<div id="chint">WASD / Arrow Keys — steer &nbsp;·&nbsp; approach islands to explore &nbsp;·&nbsp; click nav to teleport</div>
+<div id="chint">WASD steer &nbsp;·&nbsp; Q/E altitude &nbsp;·&nbsp; B bomb &nbsp;·&nbsp; fly through a gate ring to open that section</div>
 
-<!-- Mobile flight controls -->
-<div id="dpad">
-  <div class="dspace"></div>
-  <button class="dbtn" data-k="KeyW" aria-label="Forward">▲</button>
-  <div class="dspace"></div>
-  <button class="dbtn" data-k="KeyA" aria-label="Turn left">◀</button>
-  <button class="dbtn" data-k="KeyS" aria-label="Reverse">▼</button>
-  <button class="dbtn" data-k="KeyD" aria-label="Turn right">▶</button>
+<!-- HUD -->
+<div id="hud">
+  <div id="score">SCORE <span id="scorev">0000</span></div>
+  <button id="sndbtn" onclick="toggleSound()">SOUND OFF</button>
+</div>
+
+<!-- Mobile controller -->
+<div id="joy">
+  <div id="joyLbl">STEER</div>
+  <div id="joyKnob"></div>
+</div>
+<div id="rcol">
+  <button class="rbtn" data-k="KeyE" aria-label="Climb">▲</button>
+  <button class="rbtn" data-k="KeyQ" aria-label="Descend">▼</button>
+  <button id="bbtn" aria-label="Drop bomb">B</button>
 </div>
 
 <!-- Safety: always clear loading screen even if Three.js CDN is slow -->
@@ -699,8 +753,162 @@ DEFS.forEach(d => {
   const { group, light, holo } = mkIsland(d.color, d.sz);
   group.position.set(...d.p);
   scene.add(group);
-  ISL[d.id] = { group, light, holo, pos: new THREE.Vector3(...d.p), color: d.color };
+  ISL[d.id] = { group, light, holo, pos: new THREE.Vector3(...d.p), color: d.color, dead: false, rebirth: 0 };
 });
+
+// ═══════════════════════════════════════════════
+// GATE RINGS — big ring above and below each island;
+// flying through one opens that island's section
+// ═══════════════════════════════════════════════
+const RINGS = [];
+DEFS.forEach(d => {
+  [10.5, -9].forEach(dy => {
+    const rad = d.sz*.9;
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(rad, .3, 10, 48),
+      new THREE.MeshBasicMaterial({ color: new THREE.Color(d.color), transparent: true, opacity: .55 })
+    );
+    ring.rotation.x = Math.PI/2;
+    ring.position.set(d.p[0], d.p[1]+dy, d.p[2]);
+    scene.add(ring);
+    // faint inner disc so the gate reads as a portal
+    const disc = new THREE.Mesh(
+      new THREE.CircleGeometry(rad-.3, 40),
+      new THREE.MeshBasicMaterial({ color: new THREE.Color(d.color), transparent: true, opacity: .07, side: THREE.DoubleSide })
+    );
+    disc.rotation.x = Math.PI/2;
+    disc.position.copy(ring.position);
+    scene.add(disc);
+    RINGS.push({ mesh: ring, disc, pos: ring.position, rad, island: d.id, cd: 0, flash: 0 });
+  });
+});
+
+// ═══════════════════════════════════════════════
+// SCORE / AUDIO / BOMBS
+// ═══════════════════════════════════════════════
+let score = 0;
+function addScore(n) {
+  score += n;
+  document.getElementById('scorev').textContent = String(score).padStart(4, '0');
+}
+
+// Ambient audio — fully synthesized, no files
+let audioCtx = null, masterGain = null, audioOn = false;
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx   = new (window.AudioContext || window.webkitAudioContext)();
+  masterGain = audioCtx.createGain();
+  masterGain.gain.value = 0;
+  masterGain.connect(audioCtx.destination);
+  const flt = audioCtx.createBiquadFilter();
+  flt.type = 'lowpass'; flt.frequency.value = 850; flt.Q.value = .4;
+  flt.connect(masterGain);
+  // calm open-fifth drone: A2 E3 A3 E4, each with its own slow tremolo
+  [[110,'sine',.5],[164.81,'sine',.3],[220,'triangle',.16],[329.63,'sine',.09]].forEach(([fr,type,g], i) => {
+    const o  = audioCtx.createOscillator(); o.type = type; o.frequency.value = fr;
+    const og = audioCtx.createGain(); og.gain.value = g;
+    const lfo = audioCtx.createOscillator(); lfo.frequency.value = .05 + i*.037;
+    const lg  = audioCtx.createGain(); lg.gain.value = g*.45;
+    lfo.connect(lg); lg.connect(og.gain);
+    o.connect(og); og.connect(flt);
+    o.start(); lfo.start();
+  });
+}
+window.toggleSound = () => {
+  initAudio();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  audioOn = !audioOn;
+  masterGain.gain.cancelScheduledValues(audioCtx.currentTime);
+  masterGain.gain.linearRampToValueAtTime(audioOn ? .38 : 0, audioCtx.currentTime + 1.5);
+  const b = document.getElementById('sndbtn');
+  b.textContent = audioOn ? 'SOUND ON' : 'SOUND OFF';
+  b.classList.toggle('on', audioOn);
+};
+function pingSfx() {
+  if (!audioCtx || !audioOn) return;
+  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.type = 'sine';
+  o.frequency.setValueAtTime(880, audioCtx.currentTime);
+  o.frequency.exponentialRampToValueAtTime(1568, audioCtx.currentTime + .12);
+  g.gain.setValueAtTime(.15, audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(.001, audioCtx.currentTime + .35);
+  o.connect(g); g.connect(audioCtx.destination);
+  o.start(); o.stop(audioCtx.currentTime + .4);
+}
+function boomSfx() {
+  if (!audioCtx || !audioOn) return;
+  const dur = 1.1, sr = audioCtx.sampleRate;
+  const buf = audioCtx.createBuffer(1, sr*dur, sr);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random()*2-1) * Math.pow(1 - i/d.length, 2.5);
+  const src = audioCtx.createBufferSource(); src.buffer = buf;
+  const f = audioCtx.createBiquadFilter();
+  f.type = 'lowpass';
+  f.frequency.setValueAtTime(700, audioCtx.currentTime);
+  f.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + dur);
+  const g = audioCtx.createGain(); g.gain.value = .5;
+  src.connect(f); f.connect(g); g.connect(audioCtx.destination);
+  src.start();
+}
+
+// Explosions — expanding particle bursts
+const explosions = [];
+function explode(pos, power = 1) {
+  const n = 80;
+  const P = new Float32Array(n*3), V = new Float32Array(n*3);
+  for (let i = 0; i < n; i++) {
+    const th = Math.random()*Math.PI*2, ph = Math.acos(2*Math.random()-1);
+    const sp = (4 + Math.random()*9) * power;
+    V[i*3]   = Math.sin(ph)*Math.cos(th)*sp;
+    V[i*3+1] = Math.sin(ph)*Math.sin(th)*sp;
+    V[i*3+2] = Math.cos(ph)*sp;
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(P, 3));
+  const mat = new THREE.PointsMaterial({ color:0xffa040, size:.42, transparent:true, opacity:1 });
+  const pts = new THREE.Points(geo, mat);
+  pts.position.copy(pos);
+  scene.add(pts);
+  const fl = new THREE.PointLight(0xff9040, 8*power, 45);
+  fl.position.copy(pos);
+  scene.add(fl);
+  explosions.push({ pts, mat, geo, fl, life: 1.4, P, V });
+  boomSfx();
+}
+
+// Bombs
+const bombs = [];
+function dropBomb() {
+  if (bombs.length >= 3) return;
+  const bm = new THREE.Group();
+  const body = new THREE.Mesh(
+    new THREE.SphereGeometry(.2, 10, 8),
+    new THREE.MeshStandardMaterial({ color:0x22303e, metalness:.7, roughness:.35 })
+  );
+  body.scale.y = 1.35;
+  bm.add(body);
+  const fin = new THREE.Mesh(new THREE.ConeGeometry(.11, .28, 6), new THREE.MeshBasicMaterial({ color:0xff6644 }));
+  fin.position.y = .38;
+  bm.add(fin);
+  bm.position.copy(ship.position).add(new THREE.Vector3(0, -.55, 0));
+  scene.add(bm);
+  bombs.push({ mesh: bm, hvel: vel.clone(), vy: -2 });
+}
+
+function destroyIsland(id) {
+  const I = ISL[id];
+  if (I.dead) return;
+  I.dead = true;
+  I.group.visible = false;
+  addScore(50);
+  if (active === id) closePanel(id);
+  setTimeout(() => {
+    I.dead = false;
+    I.group.visible = true;
+    I.rebirth = 1;
+    I.group.scale.setScalar(.15);
+  }, 30000);
+}
 
 // ═══════════════════════════════════════════════
 // SHIP
@@ -813,11 +1021,44 @@ ship.add(engL);
 // INPUT
 // ═══════════════════════════════════════════════
 const K = {};
-window.addEventListener('keydown', e => { K[e.code]=true;  if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault(); });
+window.addEventListener('keydown', e => {
+  K[e.code]=true;
+  if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code)) e.preventDefault();
+  if (e.code==='KeyB' && !e.repeat) dropBomb();
+});
 window.addEventListener('keyup',   e => { K[e.code]=false; });
 
-// Mobile D-pad → same key map as the keyboard
-document.querySelectorAll('.dbtn').forEach(b => {
+// Bomb button (mobile)
+document.getElementById('bbtn').addEventListener('pointerdown', e => { e.preventDefault(); dropBomb(); });
+
+// Mobile virtual joystick — analog steer + thrust
+let joyX = 0, joyY = 0;
+const joyEl   = document.getElementById('joy');
+const joyKnob = document.getElementById('joyKnob');
+let joyPtr = null;
+function joyMove(e) {
+  const r  = joyEl.getBoundingClientRect();
+  let dx = e.clientX - (r.left + r.width/2);
+  let dy = e.clientY - (r.top  + r.height/2);
+  const max = r.width/2 - 28;
+  const len = Math.hypot(dx, dy);
+  if (len > max) { dx *= max/len; dy *= max/len; }
+  joyX = dx/max;
+  joyY = dy/max;
+  joyKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+}
+function joyEnd(e) {
+  if (e.pointerId !== joyPtr) return;
+  joyPtr = null; joyX = 0; joyY = 0;
+  joyKnob.style.transform = 'translate(-50%,-50%)';
+}
+joyEl.addEventListener('pointerdown', e => { e.preventDefault(); joyPtr = e.pointerId; joyEl.setPointerCapture(joyPtr); joyMove(e); });
+joyEl.addEventListener('pointermove', e => { if (e.pointerId === joyPtr) joyMove(e); });
+joyEl.addEventListener('pointerup',     joyEnd);
+joyEl.addEventListener('pointercancel', joyEnd);
+
+// Right-column altitude buttons → same key map as the keyboard
+document.querySelectorAll('.rbtn').forEach(b => {
   const k  = b.dataset.k;
   const on  = e => { e.preventDefault(); K[k]=true;  b.classList.add('held'); };
   const off = e => { e.preventDefault(); K[k]=false; b.classList.remove('held'); };
@@ -829,6 +1070,7 @@ document.querySelectorAll('.dbtn').forEach(b => {
 
 let yaw      = Math.PI;
 const vel    = new THREE.Vector3();
+let   vy     = 0;   // vertical velocity (Q/E)
 let   tilt   = 0;
 const TURN=.038, ACC=.013, MXSP=.27, DAMP=.91;
 
@@ -844,6 +1086,7 @@ let   fly  = null;
 // ═══════════════════════════════════════════════
 let active = null;
 let dismissed = null; // island whose panel the user closed while parked next to it
+let panelLock = 0;    // gate-opened panels stay up until this timestamp even while steering
 
 function openPanel(id) {
   if (active===id) return;
@@ -870,11 +1113,13 @@ window.flyTo = id => {
   ship.position.set(p.x+dx*16, p.y+2.8, p.z+dz*16);
   yaw = Math.atan2(-dx,-dz)+Math.PI;
   vel.set(0,0,0);
+  vy = 0;
   fly = {
     pos:  new THREE.Vector3(p.x+dx*18, p.y+8, p.z+dz*18),
     look: p.clone().add(new THREE.Vector3(0,1,0)),
   };
   openPanel(id);
+  panelLock = clock.elapsedTime + 3.5;
 };
 
 // ─── Typewriter ───────────────────────────────
@@ -913,6 +1158,7 @@ DEFS.forEach(d => { lblEls[d.id]=document.getElementById('lbl-'+d.id); });
 function updateLabels() {
   DEFS.forEach(d => {
     const el = lblEls[d.id]; if (!el) return;
+    if (ISL[d.id].dead) { el.style.opacity='0'; return; }
     const wp = ISL[d.id].pos.clone().setY(d.p[1]+7.5);
     const sp = wp.project(camera);
     if (sp.z<-1||sp.z>1) { el.style.opacity='0'; return; }
@@ -940,11 +1186,16 @@ const clock = new THREE.Clock();
   const t  = clock.elapsedTime;
   const f  = dt*60; // physics tuned at 60fps — scale for any refresh rate
 
-  // Float islands + pulse lights + spin holo-rings
+  // Float islands + pulse lights + spin holo-rings + rebirth grow-in
   DEFS.forEach((d, i) => {
-    ISL[d.id].group.position.y = d.p[1] + Math.sin(t*.37+i*1.1)*.44;
-    ISL[d.id].light.intensity  = 3 + Math.sin(t*1.3+i)*.6;
-    ISL[d.id].holo.rotation.z  = t*.5 + i;
+    const I = ISL[d.id];
+    I.group.position.y = d.p[1] + Math.sin(t*.37+i*1.1)*.44;
+    I.light.intensity  = 3 + Math.sin(t*1.3+i)*.6;
+    I.holo.rotation.z  = t*.5 + i;
+    if (I.rebirth > 0) {
+      I.rebirth = Math.max(0, I.rebirth - dt*.6);
+      I.group.scale.setScalar(.15 + .85*(1 - I.rebirth));
+    }
   });
 
   // Data flowing across the city grid below
@@ -955,23 +1206,33 @@ const clock = new THREE.Clock();
   stars.rotation.x = t*.001;
 
   if (!fly) {
-    // Ship controls
+    // Ship controls — keyboard + analog joystick
     if (K['KeyA']||K['ArrowLeft'])  yaw += TURN*f;
     if (K['KeyD']||K['ArrowRight']) yaw -= TURN*f;
+    if (Math.abs(joyX) > .12) yaw -= joyX*TURN*f*1.15;
     ship.rotation.y = yaw;
 
     const fwd = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
     const boost = K['Space'] ? 1.75 : 1;
     if (K['KeyW']||K['ArrowUp'])   vel.addScaledVector(fwd,  ACC*boost*f);
     if (K['KeyS']||K['ArrowDown']) vel.addScaledVector(fwd, -ACC*.44*f);
+    if (joyY < -.12) vel.addScaledVector(fwd, -joyY*ACC*boost*f*1.3);  // push up = thrust
+    if (joyY >  .12) vel.addScaledVector(fwd, -joyY*ACC*.6*f);         // pull down = reverse
     if (vel.length()>MXSP*boost) vel.normalize().multiplyScalar(MXSP*boost);
     vel.multiplyScalar(Math.pow(DAMP, f));
     ship.position.addScaledVector(vel, f);
-    ship.position.y = 2.8 + Math.sin(t*.54)*.22;
 
-    const tr = (K['KeyA']||K['ArrowLeft'])?1:(K['KeyD']||K['ArrowRight'])?-1:0;
+    // Vertical flight — E climbs, Q dives
+    if (K['KeyE']) vy += ACC*.85*f;
+    if (K['KeyQ']) vy -= ACC*.85*f;
+    vy *= Math.pow(.9, f);
+    ship.position.y += vy*f;
+    ship.position.y = Math.max(-12, Math.min(28, ship.position.y));
+
+    const tr = (K['KeyA']||K['ArrowLeft'])?1:(K['KeyD']||K['ArrowRight'])?-1:(Math.abs(joyX)>.12 ? -joyX : 0);
     tilt += (tr*.2 - tilt)*(1 - Math.pow(.9, f));
     ship.rotation.z = tilt;
+    ship.rotation.x = Math.max(-.45, Math.min(.45, -vy*2.4)); // pitch with climb/dive
 
     const thrust = K['KeyW']||K['ArrowUp'];
     engL.intensity = thrust ? 3+Math.sin(t*24)*.5 : K['Space']?2:.75;
@@ -981,28 +1242,81 @@ const clock = new THREE.Clock();
     camP.lerp(ship.position.clone().add(behind).add(new THREE.Vector3(0,7,0)), 1 - Math.pow(.945, f));
     camL.lerp(ship.position, 1 - Math.pow(.9, f));
 
-    // Flying with a panel open? Close it so the view stays clear.
-    const steering = K['KeyW']||K['ArrowUp']||K['KeyS']||K['ArrowDown']||K['KeyA']||K['ArrowLeft']||K['KeyD']||K['ArrowRight'];
-    if (steering && active) {
-      closePanel(active);
-      dismissed = null; // auto-closed, not user-dismissed — reopen freely when they stop
-    }
+    // Flying with a panel open? Close it — unless a gate just opened it (grace period)
+    const steering = K['KeyW']||K['ArrowUp']||K['KeyS']||K['ArrowDown']||K['KeyA']||K['ArrowLeft']||K['KeyD']||K['ArrowRight']||K['KeyQ']||K['KeyE']||Math.abs(joyX)>.15||Math.abs(joyY)>.15;
+    if (steering && active && t > panelLock) closePanel(active);
 
-    // Proximity — open only when the ship has actually stopped at an island,
-    // and never reopen a panel the user closed until they leave and come back
-    let nd=Infinity, ni=null;
-    DEFS.forEach(d => {
-      const dd = ship.position.distanceTo(ISL[d.id].pos);
-      if (dd<nd) { nd=dd; ni=d.id; }
+    // Gate rings — flying through one scores points AND opens that section
+    RINGS.forEach(r => {
+      if (r.cd > 0) r.cd -= dt;
+      if (r.flash > 0) {
+        r.flash = Math.max(0, r.flash - dt*1.2);
+        r.mesh.scale.setScalar(1 + Math.sin((1-r.flash)*Math.PI)*.25);
+        r.mesh.material.opacity = .55 + r.flash*.45;
+      }
+      const dx = ship.position.x - r.pos.x, dz = ship.position.z - r.pos.z;
+      if (r.cd<=0 && Math.hypot(dx,dz) < r.rad-.5 && Math.abs(ship.position.y - r.pos.y) < 1.3) {
+        r.cd = 3;
+        r.flash = 1;
+        addScore(10);
+        pingSfx();
+        openPanel(r.island);
+        panelLock = t + 3.5; // let the pilot read while still moving
+      }
     });
-    if (dismissed && (dismissed!==ni || nd>18)) dismissed=null;
-    if (nd<15 && active!==ni && dismissed!==ni && !steering && vel.length()<.06) openPanel(ni);
 
   } else {
     // Fly-to animation
     camP.lerp(fly.pos, 1 - Math.pow(.955, f));
     camL.lerp(fly.look, 1 - Math.pow(.955, f));
     if (camP.distanceTo(fly.pos)<.55) fly=null;
+  }
+
+  // Bombs — fall with gravity, explode on island or ground contact
+  for (let i = bombs.length-1; i >= 0; i--) {
+    const b = bombs[i];
+    b.vy -= 16*dt;
+    b.mesh.position.x += b.hvel.x*f;
+    b.mesh.position.z += b.hvel.z*f;
+    b.mesh.position.y += b.vy*dt;
+    b.mesh.rotation.x += dt*1.5;
+    let hit = false;
+    DEFS.forEach(d => {
+      const I = ISL[d.id];
+      if (hit || I.dead) return;
+      const dx = b.mesh.position.x - d.p[0], dz = b.mesh.position.z - d.p[2];
+      const iy = I.group.position.y;
+      if (Math.hypot(dx,dz) < d.sz*1.05 && b.mesh.position.y < iy+2 && b.mesh.position.y > iy-3.5) {
+        hit = true;
+        explode(b.mesh.position.clone(), 1.6);
+        destroyIsland(d.id);
+      }
+    });
+    if (!hit && b.mesh.position.y < -43) {
+      hit = true;
+      explode(b.mesh.position.clone().setY(-43.3), .9);
+    }
+    if (hit) { scene.remove(b.mesh); bombs.splice(i, 1); }
+  }
+
+  // Explosion particle updates
+  for (let i = explosions.length-1; i >= 0; i--) {
+    const e = explosions[i];
+    e.life -= dt;
+    if (e.life <= 0) {
+      scene.remove(e.pts); scene.remove(e.fl);
+      explosions.splice(i, 1);
+      continue;
+    }
+    const k = 1.4 - e.life;
+    for (let j = 0; j < e.P.length/3; j++) {
+      e.P[j*3]   = e.V[j*3]*k;
+      e.P[j*3+1] = e.V[j*3+1]*k - 2.5*k*k;
+      e.P[j*3+2] = e.V[j*3+2]*k;
+    }
+    e.geo.attributes.position.needsUpdate = true;
+    e.mat.opacity   = e.life/1.4;
+    e.fl.intensity  = 8*(e.life/1.4);
   }
 
   camera.position.copy(camP);
